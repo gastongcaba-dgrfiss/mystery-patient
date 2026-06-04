@@ -2,7 +2,7 @@
   "name": "Mystery Patient — Evaluación",
   "short_name": "Mystery Patient",
   "description": "Formulario de evaluación de higiene y mantenimiento en efectores de salud",
-  "start_url": "./formulario_mystery_patient.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f5f7",
   "theme_color": "#0f3d2a",
