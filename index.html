@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mystery Patient">
+<meta name="theme-color" content="#0f3d2a">
+<link rel="manifest" href="manifest.json">
+<title>Mystery Patient — Evaluación</title>
+<style>
+  :root {
+    --verde: #1a7a4a;
+    --verde-bg: #e8f5ee;
+    --verde-borde: #a3d4b8;
+    --naranja: #b85c00;
+    --naranja-bg: #fff0e0;
+    --naranja-borde: #f0b86e;
+    --rojo: #b52020;
+    --rojo-bg: #fdeaea;
+    --rojo-borde: #e89090;
+    --azul: #1559a0;
+    --azul-bg: #e8f0fb;
+    --gris-fondo: #f4f5f7;
+    --gris-card: #ffffff;
+    --gris-borde: #dde0e6;
+    --gris-texto: #6b7280;
+    --texto: #1a1d23;
+    --radio: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--gris-fondo);
+    color: var(--texto);
+    min-height: 100vh;
+    padding-bottom: 2rem;
+  }
+
+  /* HEADER */
+  .app-header {
+    background: #0f3d2a;
+    color: #fff;
+    padding: 1.1rem 1rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+  .app-header .badge {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.15);
+    color: #cde8d8;
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .app-header h1 { font-size: 17px; font-weight: 700; color: #fff; line-height: 1.2; }
+  .app-header p { font-size: 12px; color: #9fcfb3; margin-top: 2px; }
+
+  /* PROGRESS */
+  .progress-bar-wrap { background: rgba(255,255,255,0.12); height: 4px; margin-top: 10px; border-radius: 2px; }
+  .progress-bar { height: 4px; background: #4dd98a; border-radius: 2px; transition: width 0.4s; width: 0%; }
+
+  /* CONTAINER */
+  .container { padding: 1rem; max-width: 480px; margin: 0 auto; }
+
+  /* META CARD */
+  .meta-card {
+    background: var(--gris-card);
+    border-radius: var(--radio);
+    border: 1px solid var(--gris-borde);
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  .meta-card h2 { font-size: 13px; font-weight: 700; color: var(--gris-texto); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+  .field { margin-bottom: 10px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { font-size: 12px; color: var(--gris-texto); font-weight: 600; display: block; margin-bottom: 4px; }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--gris-fondo);
+    color: var(--texto);
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 10px 12px;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field textarea:focus { border-color: #0f3d2a; background: #fff; }
+  .field textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  /* SECTION CARD */
+  .sec-card {
+    background: var(--gris-card);
+    border-radius: var(--radio);
+    border: 1px solid var(--gris-borde);
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .sec-card.done { border-color: var(--verde-borde); }
+  .sec-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 14px;
+    cursor: pointer;
+    user-select: none;
+    background: #fff;
+  }
+  .sec-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .n1 { background: #e1f5ee; color: #0a5e38; }
+  .n2 { background: #e6f0fb; color: #1559a0; }
+  .n3 { background: #fff0dd; color: #9a4d00; }
+  .n4 { background: #eef5e3; color: #3a6010; }
+  .sec-info { flex: 1; min-width: 0; }
+  .sec-title { font-size: 14px; font-weight: 700; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sec-subtitle { font-size: 11px; color: var(--gris-texto); margin-top: 1px; }
+  .sec-badge {
+    font-size: 11px; font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .badge-pend { background: #f0f1f3; color: #9a9fa8; }
+  .badge-alta { background: var(--verde-bg); color: var(--verde); }
+  .badge-media { background: var(--naranja-bg); color: var(--naranja); }
+  .badge-baja { background: var(--rojo-bg); color: var(--rojo); }
+  .chevron { font-size: 20px; color: var(--gris-texto); transition: transform 0.25s; flex-shrink: 0; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .sec-body { display: none; border-top: 1px solid var(--gris-borde); padding: 14px; }
+  .sec-body.open { display: block; }
+
+  /* SECTION LABEL */
+  .slabel { font-size: 11px; font-weight: 700; color: var(--gris-texto); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px; }
+
+  /* CHECKLIST */
+  .checklist { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .chk-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--gris-fondo);
+    transition: all 0.15s;
+  }
+  .chk-item.checked { background: var(--verde-bg); border-color: var(--verde-borde); }
+  .chk-box {
+    width: 20px; height: 20px;
+    border-radius: 5px;
+    border: 2px solid var(--gris-borde);
+    background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .chk-item.checked .chk-box { background: var(--verde); border-color: var(--verde); }
+  .chk-box svg { display: none; }
+  .chk-item.checked .chk-box svg { display: block; }
+  .chk-label { font-size: 14px; color: var(--texto); line-height: 1.3; }
+  .chk-item.checked .chk-label { color: #0a5e38; font-weight: 500; }
+
+  /* CONTADOR */
+  .counter-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .counter-wrap label { font-size: 13px; color: var(--gris-texto); flex: 1; line-height: 1.3; }
+  .counter-btn {
+    width: 36px; height: 36px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    background: var(--gris-fondo);
+    color: var(--texto);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-weight: 300;
+    line-height: 1;
+  }
+  .counter-btn:active { background: #e0e3e8; }
+  .counter-val { font-size: 18px; font-weight: 700; min-width: 28px; text-align: center; }
+
+  /* DIVIDER */
+  hr { border: none; border-top: 1px solid var(--gris-borde); margin: 14px 0; }
+
+  /* CALIFICACION */
+  .rating-group { display: flex; gap: 8px; margin-bottom: 14px; }
+  .r-btn {
+    flex: 1;
+    padding: 11px 4px;
+    border: 1.5px solid var(--gris-borde);
+    border-radius: 8px;
+    background: var(--gris-fondo);
+    color: var(--gris-texto);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    -webkit-appearance: none;
+  }
+  .r-btn:active { opacity: 0.8; }
+  .r-alta { background: var(--verde-bg); color: var(--verde); border-color: var(--verde-borde); }
+  .r-media { background: var(--naranja-bg); color: var(--naranja); border-color: var(--naranja-borde); }
+  .r-baja { background: var(--rojo-bg); color: var(--rojo); border-color: var(--rojo-borde); }
+
+  /* FOTO */
+  .foto-zone {
+    border: 1.5px dashed var(--gris-borde);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    color: var(--gris-texto);
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 0;
+    background: var(--gris-fondo);
+  }
+  .foto-zone .ico { font-size: 28px; margin-bottom: 4px; }
+  .foto-thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; justify-content: center; }
+  .foto-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--gris-borde); }
+  input[type=file] { display: none; }
+  .field select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  /* RESUMEN */
+  .resumen-card {
+    background: var(--gris-card);
+    border-radius: var(--radio);
+    border: 1px solid var(--gris-borde);
+    padding: 1rem;
+    margin-top: 0.5rem;
+  }
+  .resumen-card h2 { font-size: 13px; font-weight: 700; color: var(--gris-texto); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px; }
+  .resumen-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gris-borde); }
+  .resumen-row:last-of-type { border-bottom: none; }
+  .resumen-nombre { font-size: 13px; color: var(--gris-texto); }
+
+  /* BOTONES */
+  .btn-exportar {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border: 1.5px solid var(--gris-borde);
+    border-radius: var(--radio);
+    background: #fff;
+    color: var(--texto);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-exportar:active { background: var(--gris-fondo); }
+  .btn-exportar.primary {
+    background: #0f3d2a;
+    color: #fff;
+    border-color: #0f3d2a;
+  }
+  .btn-exportar.primary:active { background: #0a2d1f; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1d23;
+    color: #fff;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    z-index: 999;
+    transition: transform 0.3s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* OBS GENERAL */
+  .obs-wrap { background: var(--gris-card); border-radius: var(--radio); border: 1px solid var(--gris-borde); padding: 1rem; margin-bottom: 10px; }
+  .obs-wrap h2 { font-size: 13px; font-weight: 700; color: var(--gris-texto); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="badge">&#128269; MYSTERY PATIENT</div>
+  <h1>Evaluación de efectores de salud</h1>
+  <p>Higiene, limpieza y mantenimiento</p>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- META -->
+  <div class="meta-card">
+    <h2>Datos de la visita</h2>
+    <div class="field">
+      <label>EFECTOR / ESTABLECIMIENTO</label>
+      <select id="efector" onchange="onEfectorChange()">
+        <option value="">— Seleccioná un efector —</option>
+        <optgroup label="Hospitales generales">
+          <option>ARGERICH</option>
+          <option>ALVAREZ</option>
+          <option>DURAND</option>
+          <option>FERNANDEZ</option>
+          <option>GRIERSON</option>
+          <option>PENNA</option>
+          <option>PIÑERO</option>
+          <option>PIROVANO</option>
+          <option>RAMOS MEJIA</option>
+          <option>RIVADAVIA</option>
+          <option>SANTOJANNI</option>
+          <option>TORNÚ</option>
+          <option>VELEZ</option>
+          <option>ZUBIZARRETA</option>
+        </optgroup>
+        <optgroup label="Hospitales especializados">
+          <option>CARRILLO</option>
+          <option>CURIE</option>
+          <option>DUEÑAS</option>
+          <option>FERRER</option>
+          <option>IREP</option>
+          <option>LAGLEYZE</option>
+          <option>MUÑIZ</option>
+          <option>PASTEUR</option>
+          <option>QUINQUELA</option>
+          <option>QUEMADOS</option>
+          <option>ROCCA</option>
+          <option>SANTA LUCIA</option>
+          <option>UDAONDO</option>
+        </optgroup>
+        <optgroup label="Hospitales pediátricos y maternidad">
+          <option>ELIZALDE</option>
+          <option>GUTIERREZ</option>
+          <option>SARDÁ</option>
+        </optgroup>
+        <optgroup label="Salud mental">
+          <option>ALVEAR</option>
+          <option>AMEGHINO</option>
+          <option>BORDA</option>
+          <option>MOYANO</option>
+          <option>TOBAR</option>
+        </optgroup>
+        <optgroup label="CEMAR">
+          <option>CEMAR 1</option>
+          <option>CEMAR 2</option>
+          <option>CEMAR 3</option>
+          <option>CEMAR 4</option>
+        </optgroup>
+        <optgroup label="CESAC">
+          <option>CESAC 1</option><option>CESAC 2</option><option>CESAC 3</option><option>CESAC 4</option><option>CESAC 5</option>
+          <option>CESAC 6</option><option>CESAC 7</option><option>CESAC 8</option><option>CESAC 9</option><option>CESAC 10</option>
+          <option>CESAC 11</option><option>CESAC 12</option><option>CESAC 13</option><option>CESAC 14</option><option>CESAC 15</option>
+          <option>CESAC 16</option><option>CESAC 17</option><option>CESAC 18</option><option>CESAC 19</option><option>CESAC 20</option>
+          <option>CESAC 21</option><option>CESAC 22</option><option>CESAC 23</option><option>CESAC 24</option><option>CESAC 25</option>
+          <option>CESAC 26</option><option>CESAC 27</option><option>CESAC 28</option><option>CESAC 29</option><option>CESAC 30</option>
+          <option>CESAC 31</option><option>CESAC 32</option><option>CESAC 33</option><option>CESAC 34</option><option>CESAC 35</option>
+          <option>CESAC 36</option><option>CESAC 37</option><option>CESAC 38</option><option>CESAC 39</option><option>CESAC 40</option>
+          <option>CESAC 41</option><option>CESAC 42</option><option>CESAC 43</option><option>CESAC 44</option><option>CESAC 45</option>
+          <option>CESAC 46</option><option>CESAC 47</option><option>CESAC 48</option><option>CESAC 49</option><option>CESAC 50</option>
+          <option>CESAC 51</option>
+        </optgroup>
+        <optgroup label="CCI">
+          <option>CCI RODRIGO BUENO</option>
+          <option>CCI CHACARITA</option>
+          <option>CCI 3 (PILETONES)</option>
+        </optgroup>
+        <optgroup label="CMC">
+          <option>CMC ALBERDI</option>
+          <option>CMC ALVAREZ THOMAS</option>
+          <option>CMC TALLER ARANGUREN</option>
+          <option>CMC AVELLANEDA</option>
+          <option>CMC GORRITI</option>
+          <option>CMC GOYENA</option>
+          <option>CMC NUEVA POMPEYA</option>
+          <option>CMC HOGAR SAN JUAN</option>
+          <option>CMC WARNES</option>
+          <option>CMC RUIZ DIAZ</option>
+        </optgroup>
+        <optgroup label="Talleres protegidos">
+          <option>TALLER PROTEGIDO MITRE</option>
+          <option>TALLER PROTEGIDO BRANSEN</option>
+          <option>TALLER PROTEGIDO DÁVILA</option>
+          <option>TALLER PROTEGIDO SUÁREZ</option>
+        </optgroup>
+        <optgroup label="Postas SAME">
+          <option>POSTA SAME BARRIO 31</option>
+          <option>POSTA SAME BARRIO 1 11 14</option>
+          <option>POSTA SAME RODÓ</option>
+        </optgroup>
+        <optgroup label="Otros">
+          <option>CESAM 01</option>
+          <option>DIRECCIÓN DE SALUD MENTAL</option>
+          <option>EDIFICIO BOLIVAR</option>
+          <option>EDIFICIO CUD</option>
+          <option>EDIFICIO FACOEP</option>
+          <option>MONASTERIO</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>FECHA</label>
+        <input type="date" id="fecha">
+      </div>
+      <div class="field">
+        <label>HORA DE INGRESO</label>
+        <input type="time" id="hora">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>AGENTE EVALUADOR</label>
+        <input type="text" id="agente" value="GUSTAVO GONZALEZ" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>EMPRESA PRESTATARIA</label>
+        <input type="text" id="empresa" placeholder="(se completará según efector)" autocomplete="off">
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOQUE 1 -->
+  <div class="sec-card" id="card1">
+    <div class="sec-header" onclick="toggle(1)">
+      <div class="sec-num n1">1</div>
+      <div class="sec-info">
+        <div class="sec-title">Residuos patológicos</div>
+        <div class="sec-subtitle">Disposición, almacenamiento, higiene</div>
+      </div>
+      <span class="sec-badge badge-pend" id="badge1">Pendiente</span>
+      <span class="chevron" id="ch1">&#8964;</span>
+    </div>
+    <div class="sec-body" id="body1">
+      <div class="slabel">Aspectos observados</div>
+      <div class="checklist">
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Correcta disposición de residuos</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Almacenamiento adecuado</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Condiciones de higiene observadas</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Contenedores identificados correctamente</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Sin derrames ni contaminación visible</span></div>
+      </div>
+      <div class="counter-wrap">
+        <label>Personal de empresa prestataria presente:</label>
+        <button class="counter-btn" onclick="adj('c1',-1)">&#8722;</button>
+        <span class="counter-val" id="c1">0</span>
+        <button class="counter-btn" onclick="adj('c1',1)">+</button>
+      </div>
+      <hr>
+      <div class="slabel">Calificación</div>
+      <div class="rating-group">
+        <button class="r-btn" onclick="rate(1,'Alta',this)">&#10003; Alta</button>
+        <button class="r-btn" onclick="rate(1,'Media',this)">&#8722; Media</button>
+        <button class="r-btn" onclick="rate(1,'Baja',this)">&#10005; Baja</button>
+      </div>
+      <div class="slabel">Fundamentación</div>
+      <div class="field" style="margin-bottom:14px">
+        <textarea id="fund1" placeholder="Describa los fundamentos de la calificación asignada..."></textarea>
+      </div>
+      <div class="slabel">Registro fotográfico</div>
+      <div class="foto-zone" onclick="document.getElementById('fi1').click()">
+        <div class="ico">&#128247;</div>
+        Tocar para agregar fotos
+        <div class="foto-thumbs" id="ft1"></div>
+      </div>
+      <input type="file" id="fi1" accept="image/*" multiple onchange="fotos('ft1',this)">
+    </div>
+  </div>
+
+  <!-- BLOQUE 2 -->
+  <div class="sec-card" id="card2">
+    <div class="sec-header" onclick="toggle(2)">
+      <div class="sec-num n2">2</div>
+      <div class="sec-info">
+        <div class="sec-title">Sanitarios</div>
+        <div class="sec-subtitle">Limpieza, insumos, mantenimiento</div>
+      </div>
+      <span class="sec-badge badge-pend" id="badge2">Pendiente</span>
+      <span class="chevron" id="ch2">&#8964;</span>
+    </div>
+    <div class="sec-body" id="body2">
+      <div class="slabel">Aspectos observados</div>
+      <div class="checklist">
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Jabón disponible</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Papel higiénico disponible</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Toallas / secamanos</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Grifería en condiciones</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Sin olores inadecuados</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Pisos y paredes limpios</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Mantenimiento adecuado</span></div>
+      </div>
+      <div class="counter-wrap">
+        <label>Personal de limpieza presente:</label>
+        <button class="counter-btn" onclick="adj('c2',-1)">&#8722;</button>
+        <span class="counter-val" id="c2">0</span>
+        <button class="counter-btn" onclick="adj('c2',1)">+</button>
+      </div>
+      <hr>
+      <div class="slabel">Calificación</div>
+      <div class="rating-group">
+        <button class="r-btn" onclick="rate(2,'Alta',this)">&#10003; Alta</button>
+        <button class="r-btn" onclick="rate(2,'Media',this)">&#8722; Media</button>
+        <button class="r-btn" onclick="rate(2,'Baja',this)">&#10005; Baja</button>
+      </div>
+      <div class="slabel">Fundamentación</div>
+      <div class="field" style="margin-bottom:14px">
+        <textarea id="fund2" placeholder="Describa los fundamentos de la calificación asignada..."></textarea>
+      </div>
+      <div class="slabel">Registro fotográfico</div>
+      <div class="foto-zone" onclick="document.getElementById('fi2').click()">
+        <div class="ico">&#128247;</div>
+        Tocar para agregar fotos
+        <div class="foto-thumbs" id="ft2"></div>
+      </div>
+      <input type="file" id="fi2" accept="image/*" multiple onchange="fotos('ft2',this)">
+    </div>
+  </div>
+
+  <!-- BLOQUE 3 -->
+  <div class="sec-card" id="card3">
+    <div class="sec-header" onclick="toggle(3)">
+      <div class="sec-num n3">3</div>
+      <div class="sec-info">
+        <div class="sec-title">Espacios interiores</div>
+        <div class="sec-subtitle">Pisos, paredes, salas, consultorios</div>
+      </div>
+      <span class="sec-badge badge-pend" id="badge3">Pendiente</span>
+      <span class="chevron" id="ch3">&#8964;</span>
+    </div>
+    <div class="sec-body" id="body3">
+      <div class="slabel">Aspectos observados</div>
+      <div class="checklist">
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Pisos limpios y sin daños</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Paredes sin manchas ni deterioro</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Vidrios limpios</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Salas de espera en orden</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Circulaciones y pasillos libres</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Pasillos limpios</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Consultorios ordenados</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Sectores comunes limpios</span></div>
+      </div>
+      <hr>
+      <div class="slabel">Calificación</div>
+      <div class="rating-group">
+        <button class="r-btn" onclick="rate(3,'Alta',this)">&#10003; Alta</button>
+        <button class="r-btn" onclick="rate(3,'Media',this)">&#8722; Media</button>
+        <button class="r-btn" onclick="rate(3,'Baja',this)">&#10005; Baja</button>
+      </div>
+      <div class="slabel">Fundamentación</div>
+      <div class="field" style="margin-bottom:14px">
+        <textarea id="fund3" placeholder="Describa los fundamentos de la calificación asignada..."></textarea>
+      </div>
+      <div class="slabel">Registro fotográfico</div>
+      <div class="foto-zone" onclick="document.getElementById('fi3').click()">
+        <div class="ico">&#128247;</div>
+        Tocar para agregar fotos
+        <div class="foto-thumbs" id="ft3"></div>
+      </div>
+      <input type="file" id="fi3" accept="image/*" multiple onchange="fotos('ft3',this)">
+    </div>
+  </div>
+
+  <!-- BLOQUE 4 -->
+  <div class="sec-card" id="card4">
+    <div class="sec-header" onclick="toggle(4)">
+      <div class="sec-num n4">4</div>
+      <div class="sec-info">
+        <div class="sec-title">Espacios exteriores</div>
+        <div class="sec-subtitle">Veredas, accesos, patios</div>
+      </div>
+      <span class="sec-badge badge-pend" id="badge4">Pendiente</span>
+      <span class="chevron" id="ch4">&#8964;</span>
+    </div>
+    <div class="sec-body" id="body4">
+      <div class="slabel">Aspectos observados</div>
+      <div class="checklist">
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Veredas limpias y accesibles</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Accesos sin obstáculos</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Patios en condiciones</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Espacios comunes limpios</span></div>
+        <div class="chk-item" onclick="chk(this)"><div class="chk-box"><svg width="12" height="10" viewBox="0 0 12 10"><polyline points="1,5 4,8 11,1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><span class="chk-label">Sin residuos visibles</span></div>
+      </div>
+      <hr>
+      <div class="slabel">Calificación</div>
+      <div class="rating-group">
+        <button class="r-btn" onclick="rate(4,'Alta',this)">&#10003; Alta</button>
+        <button class="r-btn" onclick="rate(4,'Media',this)">&#8722; Media</button>
+        <button class="r-btn" onclick="rate(4,'Baja',this)">&#10005; Baja</button>
+      </div>
+      <div class="slabel">Fundamentación</div>
+      <div class="field" style="margin-bottom:14px">
+        <textarea id="fund4" placeholder="Describa los fundamentos de la calificación asignada..."></textarea>
+      </div>
+      <div class="slabel">Registro fotográfico</div>
+      <div class="foto-zone" onclick="document.getElementById('fi4').click()">
+        <div class="ico">&#128247;</div>
+        Tocar para agregar fotos
+        <div class="foto-thumbs" id="ft4"></div>
+      </div>
+      <input type="file" id="fi4" accept="image/*" multiple onchange="fotos('ft4',this)">
+    </div>
+  </div>
+
+  <!-- OBS GENERAL -->
+  <div class="obs-wrap">
+    <h2>Observaciones generales</h2>
+    <div class="field">
+      <textarea id="obsgen" placeholder="Notas adicionales, situaciones particulares, contexto de la visita..." style="min-height:90px"></textarea>
+    </div>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="resumen-card">
+    <h2>Resumen de la evaluación</h2>
+    <div class="resumen-row"><span class="resumen-nombre">Residuos patológicos</span><span class="sec-badge badge-pend" id="sum1">Pendiente</span></div>
+    <div class="resumen-row"><span class="resumen-nombre">Sanitarios</span><span class="sec-badge badge-pend" id="sum2">Pendiente</span></div>
+    <div class="resumen-row"><span class="resumen-nombre">Espacios interiores</span><span class="sec-badge badge-pend" id="sum3">Pendiente</span></div>
+    <div class="resumen-row"><span class="resumen-nombre">Espacios exteriores</span><span class="sec-badge badge-pend" id="sum4">Pendiente</span></div>
+    <button class="btn-exportar primary" onclick="exportarExcel()" style="margin-top:14px">
+      &#128196; Exportar informe (.xlsx)
+    </button>
+    <button class="btn-exportar" onclick="copiar()" style="margin-top:8px">
+      &#128203; Copiar resumen al portapapeles
+    </button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const ratings = {1:null, 2:null, 3:null, 4:null};
+const secNames = {1:'Residuos patológicos', 2:'Sanitarios', 3:'Espacios interiores', 4:'Espacios exteriores'};
+
+const empresas = {};
+
+function onEfectorChange() {
+  const ef = document.getElementById('efector').value;
+  const emp = empresas[ef] || '';
+  document.getElementById('empresa').value = emp;
+  document.getElementById('empresa').placeholder = emp ? '' : '(completar manualmente)';
+}
+
+function toggle(n) {
+  const body = document.getElementById('body'+n);
+  const ch = document.getElementById('ch'+n);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  ch.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function chk(el) {
+  el.classList.toggle('checked');
+  const cb = el.querySelector('.chk-box');
+  cb.style.background = el.classList.contains('checked') ? 'var(--verde)' : '';
+  cb.style.borderColor = el.classList.contains('checked') ? 'var(--verde)' : '';
+}
+
+function adj(id, d) {
+  const el = document.getElementById(id);
+  el.textContent = Math.max(0, parseInt(el.textContent)+d);
+}
+
+function rate(n, val, btn) {
+  ratings[n] = val;
+  const group = btn.parentElement;
+  group.querySelectorAll('.r-btn').forEach(b => b.className = 'r-btn');
+  if (val==='Alta') btn.className = 'r-btn r-alta';
+  else if (val==='Media') btn.className = 'r-btn r-media';
+  else btn.className = 'r-btn r-baja';
+  const badgeCls = val==='Alta' ? 'badge-alta' : val==='Media' ? 'badge-media' : 'badge-baja';
+  ['badge'+n,'sum'+n].forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'sec-badge ' + badgeCls;
+    el.textContent = val;
+  });
+  if (val) document.getElementById('card'+n).classList.add('done');
+  updateProgress();
+}
+
+function fotos(tid, input) {
+  const container = document.getElementById(tid);
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.className = 'foto-thumb';
+      container.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+  const zone = container.closest('.foto-zone');
+  zone.querySelector('.ico').style.display = 'none';
+  const txts = zone.childNodes;
+  txts.forEach(n => { if(n.nodeType===3) n.textContent=''; });
+}
+
+function updateProgress() {
+  const done = Object.values(ratings).filter(Boolean).length;
+  document.getElementById('progressBar').style.width = (done/4*100)+'%';
+}
+
+function getCheckedItems(bodyId) {
+  const body = document.getElementById(bodyId);
+  const checked = body.querySelectorAll('.chk-item.checked .chk-label');
+  return Array.from(checked).map(el => el.textContent).join(', ') || '(ninguno marcado)';
+}
+
+function exportarExcel() {
+  const ef = document.getElementById('efector').value || '';
+  const ag = document.getElementById('agente').value || '';
+  const fe = document.getElementById('fecha').value || '';
+  const ho = document.getElementById('hora').value || '';
+  const em = document.getElementById('empresa').value || '';
+  const ob = document.getElementById('obsgen').value || '';
+
+  const wb = XLSX.utils.book_new();
+
+  // ---- Hoja 1: Resumen ----
+  const resumenData = [
+    ['FORMULARIO MYSTERY PATIENT — Evaluación de efectores de salud'],
+    [],
+    ['DATOS DE LA VISITA'],
+    ['Efector / Establecimiento', ef],
+    ['Fecha de visita', fe],
+    ['Hora de ingreso', ho],
+    ['Agente evaluador (código)', ag],
+    ['Empresa prestataria', em],
+    [],
+    ['RESUMEN DE CALIFICACIONES'],
+    ['Bloque', 'Calificación', 'Personal presente', 'Ítems observados cumplidos', 'Fundamentación'],
+  ];
+
+  [1,2,3,4].forEach(n => {
+    resumenData.push([
+      secNames[n],
+      ratings[n] || 'Sin calificar',
+      document.getElementById('c'+n).textContent,
+      getCheckedItems('body'+n),
+      document.getElementById('fund'+n).value || ''
+    ]);
+  });
+
+  resumenData.push([]);
+  resumenData.push(['OBSERVACIONES GENERALES']);
+  resumenData.push([ob]);
+  resumenData.push([]);
+  resumenData.push(['Fecha de generación del informe', new Date().toLocaleString('es-AR')]);
+
+  const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
+  wsResumen['!cols'] = [
+    {wch: 30}, {wch: 16}, {wch: 22}, {wch: 55}, {wch: 55}
+  ];
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  // ---- Hoja 2: Detalle por bloque ----
+  const detalleData = [
+    ['DETALLE POR BLOQUE'],
+    [],
+  ];
+
+  const bloqueItems = {
+    1: ['Correcta disposición de residuos','Almacenamiento adecuado','Condiciones de higiene observadas','Contenedores identificados correctamente','Sin derrames ni contaminación visible'],
+    2: ['Jabón disponible','Papel higiénico disponible','Toallas / secamanos','Grifería en condiciones','Sin olores inadecuados','Pisos y paredes limpios','Mantenimiento adecuado'],
+    3: ['Pisos limpios y sin daños','Paredes sin manchas ni deterioro','Vidrios limpios','Salas de espera en orden','Circulaciones y pasillos libres','Pasillos limpios','Consultorios ordenados','Sectores comunes limpios'],
+    4: ['Veredas limpias y accesibles','Accesos sin obstáculos','Patios en condiciones','Espacios comunes limpios','Sin residuos visibles']
+  };
+
+  [1,2,3,4].forEach(n => {
+    detalleData.push(['Bloque ' + n + ': ' + secNames[n]]);
+    detalleData.push(['Ítem', 'Cumplido']);
+    const body = document.getElementById('body'+n);
+    bloqueItems[n].forEach(item => {
+      const allItems = body.querySelectorAll('.chk-label');
+      let checked = false;
+      allItems.forEach(el => { if(el.textContent === item && el.closest('.chk-item').classList.contains('checked')) checked = true; });
+      detalleData.push([item, checked ? 'Sí' : 'No']);
+    });
+    detalleData.push(['Calificación', ratings[n] || 'Sin calificar']);
+    detalleData.push(['Personal presente', document.getElementById('c'+n).textContent]);
+    detalleData.push(['Fundamentación', document.getElementById('fund'+n).value || '']);
+    detalleData.push([]);
+  });
+
+  const wsDetalle = XLSX.utils.aoa_to_sheet(detalleData);
+  wsDetalle['!cols'] = [{wch: 45}, {wch: 12}];
+  XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle por bloque');
+
+  const efSlug = ef.replace(/[^a-z0-9]/gi,'_').toLowerCase() || 'efector';
+  const feSlug = fe || 'sin_fecha';
+  XLSX.writeFile(wb, 'mystery_patient_' + efSlug + '_' + feSlug + '.xlsx');
+  showToast('Informe Excel exportado');
+}
+
+function buildTextPlano() {
+  const ef = document.getElementById('efector').value || '(sin especificar)';
+  const ag = document.getElementById('agente').value || '(sin especificar)';
+  const fe = document.getElementById('fecha').value || '(sin especificar)';
+  const ho = document.getElementById('hora').value || '(sin especificar)';
+  const em = document.getElementById('empresa').value || '(sin especificar)';
+  const ob = document.getElementById('obsgen').value || '';
+  let lines = ['MYSTERY PATIENT — Evaluación de efectores de salud','',
+    'Efector: '+ef, 'Fecha: '+fe+'  Hora: '+ho,
+    'Agente: '+ag, 'Empresa: '+em, ''];
+  [1,2,3,4].forEach(n => {
+    lines.push(secNames[n].toUpperCase());
+    lines.push('Calificación: '+(ratings[n]||'Sin calificar'));
+    lines.push('Personal: '+document.getElementById('c'+n).textContent);
+    lines.push('Ítems: '+getCheckedItems('body'+n));
+    lines.push('Fundamentación: '+(document.getElementById('fund'+n).value||''));
+    lines.push('');
+  });
+  if(ob){ lines.push('Observaciones: '+ob); lines.push(''); }
+  lines.push('Generado: '+new Date().toLocaleString('es-AR'));
+  return lines.join('\n');
+}
+
+function copiar() {
+  const txt = buildTextPlano();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(() => showToast('Copiado al portapapeles'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Copiado al portapapeles');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+const now = new Date();
+document.getElementById('fecha').valueAsDate = now;
+document.getElementById('hora').value = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+toggle(1);
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
