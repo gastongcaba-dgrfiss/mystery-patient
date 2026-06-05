@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mystery Patient">
+<meta name="theme-color" content="#0f3d2a">
+<link rel="manifest" href="manifest.json">
+<title>Mystery Patient — Evaluación</title>
+<style>
+  :root {
+    --verde: #1a7a4a;
+    --verde-bg: #e8f5ee;
+    --verde-borde: #a3d4b8;
+    --naranja: #b85c00;
+    --naranja-bg: #fff0e0;
+    --naranja-borde: #f0b86e;
+    --rojo: #b52020;
+    --rojo-bg: #fdeaea;
+    --rojo-borde: #e89090;
+    --azul: #1559a0;
+    --azul-bg: #e8f0fb;
+    --gris-fondo: #f4f5f7;
+    --gris-card: #ffffff;
+    --gris-borde: #dde0e6;
+    --gris-texto: #6b7280;
+    --texto: #1a1d23;
+    --radio: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { font-size: 16px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--gris-fondo);
+    color: var(--texto);
+    min-height: 100vh;
+    padding-bottom: 2rem;
+  }
+
+  /* HEADER */
+  .app-header {
+    background: #0f3d2a;
+    color: #fff;
+    padding: 1.1rem 1rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+  .app-header .badge {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.15);
+    color: #cde8d8;
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .app-header h1 { font-size: 17px; font-weight: 700; color: #fff; line-height: 1.2; }
+  .app-header p { font-size: 12px; color: #9fcfb3; margin-top: 2px; }
+
+  /* PROGRESS */
+  .progress-bar-wrap { background: rgba(255,255,255,0.12); height: 4px; margin-top: 10px; border-radius: 2px; }
+  .progress-bar { height: 4px; background: #4dd98a; border-radius: 2px; transition: width 0.4s; width: 0%; }
+
+  /* CONTAINER */
+  .container { padding: 1rem; max-width: 480px; margin: 0 auto; }
+
+  /* META CARD */
+  .meta-card {
+    background: var(--gris-card);
+    border-radius: var(--radio);
+    border: 1px solid var(--gris-borde);
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  .meta-card h2 { font-size: 13px; font-weight: 700; color: var(--gris-texto); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+  .field { margin-bottom: 10px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { font-size: 12px; color: var(--gris-texto); font-weight: 600; display: block; margin-bottom: 4px; }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--gris-fondo);
+    color: var(--texto);
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 10px 12px;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field textarea:focus { border-color: #0f3d2a; background: #fff; }
+  .field textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* AUTOCOMPLETE */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-wrap input { padding-right: 36px; }
+  .autocomplete-clear {
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--gris-borde);
+    color: var(--gris-texto);
+    font-size: 13px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+    border: none;
+    font-family: inherit;
+  }
+  .autocomplete-clear.visible { display: flex; }
+  .autocomplete-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #fff;
+    border: 1px solid var(--gris-borde);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 200;
+    max-height: 260px;
+    overflow-y: auto;
+    display: none;
+  }
+  .autocomplete-dropdown.open { display: block; }
+  .ac-item {
+    padding: 11px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--gris-fondo);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover, .ac-item.focused { background: var(--verde-bg); color: var(--verde); }
+  .ac-item .ac-tag {
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--gris-fondo);
+    color: var(--gris-texto);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .ac-item.focused .ac-tag { background: #c8ebd8; color: var(--verde); }
+  .ac-empty { padding: 14px; font-size: 13px; color: var(--gris-texto); text-align: center; }
+
+  /* EMPRESA PILLS */
+  .empresa-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gris-fondo);
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 9px 12px;
+    margin-top: 4px;
+  }
+  .empresa-pill .pill-ico { font-size: 15px; flex-shrink: 0; }
+  .empresa-pill .pill-label { font-size: 11px; color: var(--gris-texto); font-weight: 600; }
+  .empresa-pill .pill-val { font-size: 14px; color: var(--texto); font-weight: 500; }
+  .empresa-pill.filled { border-color: var(--verde-borde); background: var(--verde-bg); }
+  .empresa-pill.filled .pill-label { color: #0a6035; }
+  .empresa-pill.filled .pill-val { color: #0a3d20; }
+  .empresas-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+
+  /* SECTION CARD */
+  .sec-card {
+    background: var(--gris-card);
+    border-radius: var(--radio);
+    border: 1px solid var(--gris-borde);
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .sec-card.done { border-color: var(--verde-borde); }
+  .sec-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 14px;
+    cursor: pointer;
+    user-select: none;
+    background: #fff;
+  }
+  .sec-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .n1 { background: #fce8e8; color: #8b1a1a; }
+  .n2 { background: #e6f0fb; color: #1559a0; }
+  .n3 { background: #1a1d23; color: #fff; }
+  .n4 { background: #2d2d2d; color: #ccc; }
+  .n5 { background: #e1f5e8; color: #0a6035; }
+  .sec-info { flex: 1; min-width: 0; }
+  .sec-title { font-size: 14px; font-weight: 700; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sec-subtitle { font-size: 11px; color: var(--gris-texto); margin-top: 1px; }
+  .sec-badge {
+    font-size: 11px; font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .badge-pend { background: #f0f1f3; color: #9a9fa8; }
+  .badge-bueno { background: var(--verde-bg); color: var(--verde); }
+  .badge-regular { background: var(--naranja-bg); color: var(--naranja); }
+  .badge-malo { background: var(--rojo-bg); color: var(--rojo); }
+  .chevron { font-size: 20px; color: var(--gris-texto); transition: transform 0.25s; flex-shrink: 0; }
+
+  .sec-body { display: none; border-top: 1px solid var(--gris-borde); padding: 14px; }
+  .sec-body.open { display: block; }
+
+  /* SECTION LABEL */
+  .slabel { font-size: 11px; font-weight: 700; color: var(--gris-texto); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px; }
+
+  /* ASPECTO ROW — nuevo sistema de evaluación por ítem */
+  .aspect-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .aspect-row {
+    border: 1px solid var(--gris-borde);
+    border-radius: 10px;
+    background: var(--gris-fondo);
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .aspect-row.val-bueno { border-color: var(--verde-borde); background: #f4fbf7; }
+  .aspect-row.val-regular { border-color: var(--naranja-borde); background: #fffbf5; }
+  .aspect-row.val-malo { border-color: var(--rojo-borde); background: #fdf5f5; }
+
+  .aspect-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .aspect-name {
+    flex: 1;
+    font-size: 14px;
+    color: var(--texto);
+    line-height: 1.3;
+  }
+  .aspect-btns {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .asp-btn {
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1.5px solid var(--gris-borde);
+    background: #fff;
+    color: var(--gris-texto);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    -webkit-appearance: none;
+  }
+  .asp-btn:active { opacity: 0.75; }
+  .asp-btn.sel-bueno { background: var(--verde-bg); color: var(--verde); border-color: var(--verde-borde); }
+  .asp-btn.sel-regular { background: var(--naranja-bg); color: var(--naranja); border-color: var(--naranja-borde); }
+  .asp-btn.sel-malo { background: var(--rojo-bg); color: var(--rojo); border-color: var(--rojo-borde); }
+
+  .aspect-fund {
+    display: none;
+    padding: 0 12px 10px;
+    border-top: 1px solid var(--rojo-borde);
+    background: #fff8f8;
+  }
+  .aspect-fund.visible { display: block; }
+  .aspect-fund label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--rojo);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: block;
+    margin: 8px 0 5px;
+  }
+  .aspect-fund textarea {
+    width: 100%;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--texto);
+    border: 1px solid var(--rojo-borde);
+    border-radius: 6px;
+    padding: 8px 10px;
+    outline: none;
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.5;
+  }
+  .aspect-fund textarea:focus { border-color: var(--rojo); }
+
+  /* PROMEDIO BLOQUE */
+  .bloque-promedio {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--gris-fondo);
+    border-radius: 8px;
+    margin-bottom: 14px;
+    border: 1px solid var(--gris-borde);
+  }
+  .bloque-promedio .prom-label { font-size: 12px; color: var(--gris-texto); font-weight: 600; flex: 1; }
+  .bloque-promedio .prom-val {
+    font-size: 13px; font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: #f0f1f3;
+    color: #9a9fa8;
+  }
+  .bloque-promedio .prom-val.bueno { background: var(--verde-bg); color: var(--verde); }
+  .bloque-promedio .prom-val.regular { background: var(--naranja-bg); color: var(--naranja); }
+  .bloque-promedio .prom-val.malo { background: var(--rojo-bg); color: var(--rojo); }
+
+  /* DIVIDER */
+  hr { border: none; border-top: 1px solid var(--gris-borde); margin: 14px 0; }
+
+  /* FOTO */
+  .foto-zone {
+    border: 1.5px dashed var(--gris-borde);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    color: var(--gris-texto);
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 0;
+    background: var(--gris-fondo);
+  }
+  .foto-zone .ico { font-size: 28px; margin-bottom: 4px; }
+  .foto-thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; justify-content: center; }
+  .foto-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border: 1px solid var(--gris-borde); }
+  input[type=file] { display: none; }
+
+  /* RESUMEN */
+  .resumen-card {
+    background: var(--gris-card);
+    border-radius: var(--radio);
+    border: 1px solid var(--gris-borde);
+    padding: 1rem;
+    margin-top: 0.5rem;
+  }
+  .resumen-card h2 { font-size: 13px; font-weight: 700; color: var(--gris-texto); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px; }
+  .resumen-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gris-borde); }
+  .resumen-row:last-of-type { border-bottom: none; }
+  .resumen-nombre { font-size: 13px; color: var(--gris-texto); }
+
+  /* BOTONES */
+  .btn-exportar {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border: 1.5px solid var(--gris-borde);
+    border-radius: var(--radio);
+    background: #fff;
+    color: var(--texto);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-exportar:active { background: var(--gris-fondo); }
+  .btn-exportar.primary {
+    background: #0f3d2a;
+    color: #fff;
+    border-color: #0f3d2a;
+  }
+  .btn-exportar.primary:active { background: #0a2d1f; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1d23;
+    color: #fff;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    z-index: 999;
+    transition: transform 0.3s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* OBS GENERAL */
+  .obs-wrap { background: var(--gris-card); border-radius: var(--radio); border: 1px solid var(--gris-borde); padding: 1rem; margin-bottom: 10px; }
+  .obs-wrap h2 { font-size: 13px; font-weight: 700; color: var(--gris-texto); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="badge">&#128269; MYSTERY PATIENT</div>
+  <h1>Evaluación de efectores de salud</h1>
+  <p>Higiene, limpieza y mantenimiento</p>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- META -->
+  <div class="meta-card">
+    <h2>Datos de la visita</h2>
+    <div class="field">
+      <label>EFECTOR / ESTABLECIMIENTO</label>
+      <div class="autocomplete-wrap">
+        <input type="text" id="efectorInput" placeholder="Escribí el nombre del efector..."
+          autocomplete="off" autocorrect="off" spellcheck="false"
+          oninput="acInput()" onkeydown="acKeydown(event)" onfocus="acInput()">
+        <button class="autocomplete-clear" id="acClear" onclick="acClear()" tabindex="-1">✕</button>
+        <div class="autocomplete-dropdown" id="acDropdown"></div>
+      </div>
+    </div>
+    <div class="empresas-row">
+      <div>
+        <div style="font-size:12px;color:var(--gris-texto);font-weight:600;margin-bottom:4px;">EMP. MANTENIMIENTO</div>
+        <div class="empresa-pill" id="pillMant">
+          <span class="pill-ico">🔧</span>
+          <span class="pill-val" id="valMant" style="color:var(--gris-texto);font-size:13px;">—</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--gris-texto);font-weight:600;margin-bottom:4px;">EMP. LIMPIEZA</div>
+        <div class="empresa-pill" id="pillLimp">
+          <span class="pill-ico">🧹</span>
+          <span class="pill-val" id="valLimp" style="color:var(--gris-texto);font-size:13px;">—</span>
+        </div>
+      </div>
+    </div>
+    <div class="row2" style="margin-top:10px;">
+      <div class="field">
+        <label>FECHA</label>
+        <input type="date" id="fecha">
+      </div>
+      <div class="field">
+        <label>HORA DE INGRESO</label>
+        <input type="time" id="hora">
+      </div>
+    </div>
+    <div class="field">
+      <label>AGENTE EVALUADOR</label>
+      <input type="text" id="agente" value="GUSTAVO GONZALEZ" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- BLOQUE 1: RESIDUOS PATOGÉNICOS -->
+  <div class="sec-card" id="card1">
+    <div class="sec-header" onclick="toggle(1)">
+      <div class="sec-num n1">1</div>
+      <div class="sec-info">
+        <div class="sec-title">Residuos Patogénicos</div>
+        <div class="sec-subtitle">Acopio, contenedores, balanza, higiene</div>
+      </div>
+      <span class="sec-badge badge-pend" id="badge1">Pendiente</span>
+      <span class="chevron" id="ch1">&#8964;</span>
+    </div>
+    <div class="sec-body" id="body1">
+      <div class="slabel">Evaluación por aspecto</div>
+      <div class="aspect-list" id="aspects1">
+        <div class="aspect-row" data-block="1" data-idx="0">
+          <div class="aspect-top">
+            <span class="aspect-name">Acopio intermedio</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,1,0,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,1,0,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,1,0,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund1_0">
+            <label>⚠ Fundamentar calificación MALO</label>
+            <textarea placeholder="Describa el problema observado..."></textarea>
+          </div>
+        </div>
+        <div class="aspect-row" data-block="1" data-idx="1">
+          <div class="aspect-top">
+            <span class="aspect-name">Acopio final</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,1,1,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,1,1,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,1,1,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund1_1">
+            <label>⚠ Fundamentar calificación MALO</label>
+            <textarea placeholder="Describa el problema observado..."></textarea>
+          </div>
+        </div>
+        <div class="aspect-row" data-block="1" data-idx="2">
+          <div class="aspect-top">
+            <span class="aspect-name">Contenedores</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,1,2,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,1,2,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,1,2,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund1_2">
+            <label>⚠ Fundamentar calificación MALO</label>
+            <textarea placeholder="Describa el problema observado..."></textarea>
+          </div>
+        </div>
+        <div class="aspect-row" data-block="1" data-idx="3">
+          <div class="aspect-top">
+            <span class="aspect-name">Balanza</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,1,3,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,1,3,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,1,3,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund1_3">
+            <label>⚠ Fundamentar calificación MALO</label>
+            <textarea placeholder="Describa el problema observado..."></textarea>
+          </div>
+        </div>
+        <div class="aspect-row" data-block="1" data-idx="4">
+          <div class="aspect-top">
+            <span class="aspect-name">Condiciones de higiene</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,1,4,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,1,4,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,1,4,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund1_4">
+            <label>⚠ Fundamentar calificación MALO</label>
+            <textarea placeholder="Describa el problema observado..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="bloque-promedio">
+        <span class="prom-label">Calificación del bloque</span>
+        <span class="prom-val" id="prom1">Pendiente</span>
+      </div>
+      <hr>
+      <div class="slabel">Registro fotográfico</div>
+      <div class="foto-zone" onclick="document.getElementById('fi1').click()">
+        <div class="ico">&#128247;</div>
+        Tocar para agregar fotos
+        <div class="foto-thumbs" id="ft1"></div>
+      </div>
+      <input type="file" id="fi1" accept="image/*" multiple onchange="fotos('ft1',this)">
+    </div>
+  </div>
+
+  <!-- BLOQUE 2: RESIDUOS HÚMEDOS -->
+  <div class="sec-card" id="card2">
+    <div class="sec-header" onclick="toggle(2)">
+      <div class="sec-num n2">2</div>
+      <div class="sec-info">
+        <div class="sec-title">Residuos Húmedos</div>
+        <div class="sec-subtitle">Acopio intermedio, final, contenedores</div>
+      </div>
+      <span class="sec-badge badge-pend" id="badge2">Pendiente</span>
+      <span class="chevron" id="ch2">&#8964;</span>
+    </div>
+    <div class="sec-body" id="body2">
+      <div class="slabel">Evaluación por aspecto</div>
+      <div class="aspect-list" id="aspects2">
+        <div class="aspect-row" data-block="2" data-idx="0">
+          <div class="aspect-top">
+            <span class="aspect-name">Acopio intermedio</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,2,0,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,2,0,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,2,0,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund2_0">
+            <label>⚠ Fundamentar calificación MALO</label>
+            <textarea placeholder="Describa el problema observado..."></textarea>
+          </div>
+        </div>
+        <div class="aspect-row" data-block="2" data-idx="1">
+          <div class="aspect-top">
+            <span class="aspect-name">Acopio final</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,2,1,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,2,1,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,2,1,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund2_1">
+            <label>⚠ Fundamentar calificación MALO</label>
+            <textarea placeholder="Describa el problema observado..."></textarea>
+          </div>
+        </div>
+        <div class="aspect-row" data-block="2" data-idx="2">
+          <div class="aspect-top">
+            <span class="aspect-name">Contenedores</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,2,2,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,2,2,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,2,2,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund2_2">
+            <label>⚠ Fundamentar calificación MALO</label>
+            <textarea placeholder="Describa el problema observado..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="bloque-promedio">
+        <span class="prom-label">Calificación del bloque</span>
+        <span class="prom-val" id="prom2">Pendiente</span>
+      </div>
+      <hr>
+      <div class="slabel">Registro fotográfico</div>
+      <div class="foto-zone" onclick="document.getElementById('fi2').click()">
+        <div class="ico">&#128247;</div>
+        Tocar para agregar fotos
+        <div class="foto-thumbs" id="ft2"></div>
+      </div>
+      <input type="file" id="fi2" accept="image/*" multiple onchange="fotos('ft2',this)">
+    </div>
+  </div>
+
+  <!-- BLOQUE 3: ÁREAS NEGRAS CUBIERTAS -->
+  <div class="sec-card" id="card3">
+    <div class="sec-header" onclick="toggle(3)">
+      <div class="sec-num n3">3</div>
+      <div class="sec-info">
+        <div class="sec-title">Áreas Negras Cubiertas</div>
+        <div class="sec-subtitle">Salas, pasillos, mobiliario, pisos, paredes, vidrios</div>
+      </div>
+      <span class="sec-badge badge-pend" id="badge3">Pendiente</span>
+      <span class="chevron" id="ch3">&#8964;</span>
+    </div>
+    <div class="sec-body" id="body3">
+      <div class="slabel">Evaluación por aspecto</div>
+      <div class="aspect-list" id="aspects3">
+        <div class="aspect-row" data-block="3" data-idx="0">
+          <div class="aspect-top">
+            <span class="aspect-name">Salas de espera</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,3,0,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,0,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,0,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund3_0"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="3" data-idx="1">
+          <div class="aspect-top">
+            <span class="aspect-name">Pasillos</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,3,1,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,1,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,1,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund3_1"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="3" data-idx="2">
+          <div class="aspect-top">
+            <span class="aspect-name">Mobiliarios / Equipamiento</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,3,2,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,2,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,2,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund3_2"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="3" data-idx="3">
+          <div class="aspect-top">
+            <span class="aspect-name">Pisos</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,3,3,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,3,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,3,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund3_3"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="3" data-idx="4">
+          <div class="aspect-top">
+            <span class="aspect-name">Paredes</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,3,4,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,4,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,4,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund3_4"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="3" data-idx="5">
+          <div class="aspect-top">
+            <span class="aspect-name">Vidrios</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,3,5,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,5,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,3,5,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund3_5"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+      </div>
+      <div class="bloque-promedio">
+        <span class="prom-label">Calificación del bloque</span>
+        <span class="prom-val" id="prom3">Pendiente</span>
+      </div>
+      <hr>
+      <div class="slabel">Registro fotográfico</div>
+      <div class="foto-zone" onclick="document.getElementById('fi3').click()">
+        <div class="ico">&#128247;</div>
+        Tocar para agregar fotos
+        <div class="foto-thumbs" id="ft3"></div>
+      </div>
+      <input type="file" id="fi3" accept="image/*" multiple onchange="fotos('ft3',this)">
+    </div>
+  </div>
+
+  <!-- BLOQUE 4: ÁREAS NEGRAS DESCUBIERTAS -->
+  <div class="sec-card" id="card4">
+    <div class="sec-header" onclick="toggle(4)">
+      <div class="sec-num n4">4</div>
+      <div class="sec-info">
+        <div class="sec-title">Áreas Negras Descubiertas</div>
+        <div class="sec-subtitle">Veredas, ingresos, señalizaciones, mobiliario</div>
+      </div>
+      <span class="sec-badge badge-pend" id="badge4">Pendiente</span>
+      <span class="chevron" id="ch4">&#8964;</span>
+    </div>
+    <div class="sec-body" id="body4">
+      <div class="slabel">Evaluación por aspecto</div>
+      <div class="aspect-list" id="aspects4">
+        <div class="aspect-row" data-block="4" data-idx="0">
+          <div class="aspect-top">
+            <span class="aspect-name">Veredas externas</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,4,0,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,0,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,0,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund4_0"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="4" data-idx="1">
+          <div class="aspect-top">
+            <span class="aspect-name">Veredas internas</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,4,1,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,1,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,1,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund4_1"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="4" data-idx="2">
+          <div class="aspect-top">
+            <span class="aspect-name">Ingreso</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,4,2,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,2,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,2,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund4_2"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="4" data-idx="3">
+          <div class="aspect-top">
+            <span class="aspect-name">Salida</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,4,3,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,3,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,3,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund4_3"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="4" data-idx="4">
+          <div class="aspect-top">
+            <span class="aspect-name">Señalizaciones</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,4,4,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,4,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,4,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund4_4"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="4" data-idx="5">
+          <div class="aspect-top">
+            <span class="aspect-name">Mobiliarios</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,4,5,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,5,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,4,5,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund4_5"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+      </div>
+      <div class="bloque-promedio">
+        <span class="prom-label">Calificación del bloque</span>
+        <span class="prom-val" id="prom4">Pendiente</span>
+      </div>
+      <hr>
+      <div class="slabel">Registro fotográfico</div>
+      <div class="foto-zone" onclick="document.getElementById('fi4').click()">
+        <div class="ico">&#128247;</div>
+        Tocar para agregar fotos
+        <div class="foto-thumbs" id="ft4"></div>
+      </div>
+      <input type="file" id="fi4" accept="image/*" multiple onchange="fotos('ft4',this)">
+    </div>
+  </div>
+
+  <!-- BLOQUE 5: ÁREAS VERDES -->
+  <div class="sec-card" id="card5">
+    <div class="sec-header" onclick="toggle(5)">
+      <div class="sec-num n5">5</div>
+      <div class="sec-info">
+        <div class="sec-title">Áreas Verdes</div>
+        <div class="sec-subtitle">Limpieza y mantenimiento</div>
+      </div>
+      <span class="sec-badge badge-pend" id="badge5">Pendiente</span>
+      <span class="chevron" id="ch5">&#8964;</span>
+    </div>
+    <div class="sec-body" id="body5">
+      <div class="slabel">Evaluación por aspecto</div>
+      <div class="aspect-list" id="aspects5">
+        <div class="aspect-row" data-block="5" data-idx="0">
+          <div class="aspect-top">
+            <span class="aspect-name">Limpieza</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,5,0,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,5,0,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,5,0,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund5_0"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+        <div class="aspect-row" data-block="5" data-idx="1">
+          <div class="aspect-top">
+            <span class="aspect-name">Mantenimiento</span>
+            <div class="aspect-btns">
+              <button class="asp-btn" onclick="rateAspect(this,5,1,'bueno')">Bueno</button>
+              <button class="asp-btn" onclick="rateAspect(this,5,1,'regular')">Regular</button>
+              <button class="asp-btn" onclick="rateAspect(this,5,1,'malo')">Malo</button>
+            </div>
+          </div>
+          <div class="aspect-fund" id="fund5_1"><label>⚠ Fundamentar calificación MALO</label><textarea placeholder="Describa el problema observado..."></textarea></div>
+        </div>
+      </div>
+      <div class="bloque-promedio">
+        <span class="prom-label">Calificación del bloque</span>
+        <span class="prom-val" id="prom5">Pendiente</span>
+      </div>
+      <hr>
+      <div class="slabel">Registro fotográfico</div>
+      <div class="foto-zone" onclick="document.getElementById('fi5').click()">
+        <div class="ico">&#128247;</div>
+        Tocar para agregar fotos
+        <div class="foto-thumbs" id="ft5"></div>
+      </div>
+      <input type="file" id="fi5" accept="image/*" multiple onchange="fotos('ft5',this)">
+    </div>
+  </div>
+
+  <!-- OBS GENERAL -->
+  <div class="obs-wrap">
+    <h2>Observaciones generales</h2>
+    <div class="field">
+      <textarea id="obsgen" placeholder="Notas adicionales, situaciones particulares, contexto de la visita..." style="min-height:90px"></textarea>
+    </div>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="resumen-card">
+    <h2>Resumen de la evaluación</h2>
+    <div class="resumen-row"><span class="resumen-nombre">Residuos Patogénicos</span><span class="sec-badge badge-pend" id="sum1">Pendiente</span></div>
+    <div class="resumen-row"><span class="resumen-nombre">Residuos Húmedos</span><span class="sec-badge badge-pend" id="sum2">Pendiente</span></div>
+    <div class="resumen-row"><span class="resumen-nombre">Áreas Negras Cubiertas</span><span class="sec-badge badge-pend" id="sum3">Pendiente</span></div>
+    <div class="resumen-row"><span class="resumen-nombre">Áreas Negras Descubiertas</span><span class="sec-badge badge-pend" id="sum4">Pendiente</span></div>
+    <div class="resumen-row"><span class="resumen-nombre">Áreas Verdes</span><span class="sec-badge badge-pend" id="sum5">Pendiente</span></div>
+    <button class="btn-exportar primary" onclick="exportarExcel()" style="margin-top:14px">
+      &#128196; Exportar informe (.xlsx)
+    </button>
+    <button class="btn-exportar" onclick="resetearFormulario()" style="margin-top:8px">
+      &#8634; Restablecer formulario
+    </button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+// =====================================================
+// DATOS DE EFECTORES Y EMPRESAS
+// =====================================================
+const empresasDB = {
+  "AMEGHINO": { mant: "SES", limp: "AMB SUR" },
+  "BORDA": { mant: "UTE MIG S.A. - MH S.A.", limp: "MANILA" },
+  "TOBAR": { mant: "UTE MIG S.A. - MH S.A.", limp: "LA MANTOVANA" },
+  "MOYANO": { mant: "SES", limp: "GENTE DE LIMPIEZA" },
+  "GRIERSON": { mant: "INDALTEC", limp: "INDALTEC" },
+  "PENNA": { mant: "INDALTEC", limp: "INDALTEC" },
+  "MUÑIZ": { mant: "INDALTEC", limp: "INDALTEC" },
+  "SANTOJANNI": { mant: "INDALTEC", limp: "INDALTEC" },
+  "RIVADAVIA": { mant: "SEYMA - Mantelectric - Riva UTE", limp: "LA MANTOVANA" },
+  "IREP": { mant: "MEJORES HOSPITALES", limp: "LA MANTOVANA" },
+  "CARRILLO": { mant: "M.H.", limp: "LA MANTOVANA" },
+  "SANTA LUCIA": { mant: "SEHOS", limp: "LA MANTOVANA" },
+  "PIÑERO": { mant: "LESKO", limp: "LESKO" },
+  "LAGLEYZE": { mant: "MEJORES HOSPITALES", limp: "MANILA" },
+  "UDAONDO": { mant: "INDALTEC", limp: "MANILA" },
+  "PASTEUR": { mant: "MEJORES HOSPITALES", limp: "MEJORES HOSPITALES" },
+  "FERRER": { mant: "MEJORES HOSPITALES", limp: "MEJORES HOSPITALES" },
+  "GUTIERREZ": { mant: "MEJORES HOSPITALES", limp: "MEJORES HOSPITALES" },
+  "ALVEAR": { mant: "M.H.", limp: "M.H." },
+  "PIROVANO": { mant: "M.H.", limp: "M.H." },
+  "ELIZALDE": { mant: "M.H.", limp: "M.H." },
+  "QUEMADOS": { mant: "M.H.", limp: "M.H." },
+  "SARDÁ": { mant: "MIG S.A.", limp: "MIG" },
+  "FERNANDEZ": { mant: "MIG S.A.", limp: "MIG" },
+  "VELEZ": { mant: "SEHOS", limp: "SEHOS" },
+  "QUINQUELA MARTIN": { mant: "SEHOS", limp: "SEHOS" },
+  "ZUBIZARRETA": { mant: "SEHOS", limp: "SEHOS" },
+  "ARGERICH": { mant: "SEHOS", limp: "SEHOS" },
+  "DUEÑAS": { mant: "SES", limp: "SES" },
+  "TORNÚ": { mant: "SES", limp: "SES" },
+  "RAMOS MEJIA": { mant: "SES", limp: "SES" },
+  "DURAND": { mant: "SEYMA - Mantelectric - Riva UTE", limp: "SEYMA - Mantelectric - Riva UTE" },
+  "ROCCA": { mant: "VEOLIA", limp: "VEOLIA" },
+  "ALVAREZ": { mant: "VEOLIA", limp: "VEOLIA" },
+  "CURIE": { mant: "VEOLIA", limp: "VEOLIA" },
+  "CESACs GRUPO A": { mant: "SEHOS", limp: "SEHOS" },
+  "CESACs GRUPO B": { mant: "INDALTEC", limp: "INDALTEC" },
+};
+
+const todosLosEfectores = [
+  ...Object.keys(empresasDB),
+  "ALVAREZ", "DURAND", "FERNANDEZ", "GRIERSON", "PENNA", "PIÑERO", "PIROVANO",
+  "RAMOS MEJIA", "RIVADAVIA", "SANTOJANNI", "TORNÚ", "VELEZ", "ZUBIZARRETA",
+  "CARRILLO", "CURIE", "DUEÑAS", "FERRER", "IREP", "LAGLEYZE", "MUÑIZ",
+  "PASTEUR", "QUINQUELA", "QUEMADOS", "ROCCA", "SANTA LUCIA", "UDAONDO",
+  "ELIZALDE", "GUTIERREZ", "SARDÁ", "ALVEAR", "AMEGHINO", "BORDA", "MOYANO", "TOBAR",
+  "CEMAR 1", "CEMAR 2", "CEMAR 3", "CEMAR 4",
+  "CESAC 1","CESAC 2","CESAC 3","CESAC 4","CESAC 5","CESAC 6","CESAC 7","CESAC 8","CESAC 9","CESAC 10",
+  "CESAC 11","CESAC 12","CESAC 13","CESAC 14","CESAC 15","CESAC 16","CESAC 17","CESAC 18","CESAC 19","CESAC 20",
+  "CESAC 21","CESAC 22","CESAC 23","CESAC 24","CESAC 25","CESAC 26","CESAC 27","CESAC 28","CESAC 29","CESAC 30",
+  "CESAC 31","CESAC 32","CESAC 33","CESAC 34","CESAC 35","CESAC 36","CESAC 37","CESAC 38","CESAC 39","CESAC 40",
+  "CESAC 41","CESAC 42","CESAC 43","CESAC 44","CESAC 45","CESAC 46","CESAC 47","CESAC 48","CESAC 49","CESAC 50","CESAC 51",
+  "CCI RODRIGO BUENO","CCI CHACARITA","CCI 3 (PILETONES)",
+  "CMC ALBERDI","CMC ALVAREZ THOMAS","CMC TALLER ARANGUREN","CMC AVELLANEDA",
+  "CMC GORRITI","CMC GOYENA","CMC NUEVA POMPEYA","CMC HOGAR SAN JUAN","CMC WARNES","CMC RUIZ DIAZ",
+  "TALLER PROTEGIDO MITRE","TALLER PROTEGIDO BRANSEN","TALLER PROTEGIDO DÁVILA","TALLER PROTEGIDO SUÁREZ",
+  "POSTA SAME BARRIO 31","POSTA SAME BARRIO 1 11 14","POSTA SAME RODÓ",
+  "CESAM 01","DIRECCIÓN DE SALUD MENTAL","EDIFICIO BOLIVAR","EDIFICIO CUD","EDIFICIO FACOEP","MONASTERIO"
+];
+const efectorList = [...new Set(todosLosEfectores)].sort((a,b) => a.localeCompare(b, 'es'));
+
+// =====================================================
+// ESTADO DE ASPECTOS POR BLOQUE
+// Estructura: aspectScores[bloque][idx] = 'bueno'|'regular'|'malo'|null
+// =====================================================
+const aspectScores = { 1:{}, 2:{}, 3:{}, 4:{}, 5:{} };
+const blockRatings = { 1:null, 2:null, 3:null, 4:null, 5:null };
+const secNames = {
+  1:'Residuos Patogénicos',
+  2:'Residuos Húmedos',
+  3:'Áreas Negras Cubiertas',
+  4:'Áreas Negras Descubiertas',
+  5:'Áreas Verdes'
+};
+const TOTAL_BLOQUES = 5;
+
+// =====================================================
+// AUTOCOMPLETE
+// =====================================================
+let acFocusIndex = -1;
+let selectedEfector = '';
+
+function normalize(s) {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
+function acInput() {
+  const val = document.getElementById('efectorInput').value;
+  const norm = normalize(val.trim());
+  document.getElementById('acClear').classList.toggle('visible', val.length > 0);
+  const dd = document.getElementById('acDropdown');
+  acFocusIndex = -1;
+  if (!norm) {
+    renderDropdown(efectorList.slice(0,60), '');
+    dd.classList.add('open');
+    return;
+  }
+  const matches = efectorList.filter(e => normalize(e).includes(norm));
+  if (matches.length === 0) {
+    dd.innerHTML = '<div class="ac-empty">No se encontraron efectores</div>';
+    dd.classList.add('open');
+    return;
+  }
+  renderDropdown(matches, norm);
+  dd.classList.add('open');
+}
+function renderDropdown(items, norm) {
+  const dd = document.getElementById('acDropdown');
+  dd.innerHTML = items.map((ef) => {
+    const hasDatos = empresasDB[ef];
+    const tag = hasDatos ? `<span class="ac-tag">con datos</span>` : '';
+    let label = ef;
+    if (norm) {
+      const normEf = normalize(ef);
+      const idx = normEf.indexOf(norm);
+      if (idx >= 0) {
+        label = ef.substring(0,idx)+'<strong>'+ef.substring(idx,idx+norm.length)+'</strong>'+ef.substring(idx+norm.length);
+      }
+    }
+    return `<div class="ac-item" data-ef="${ef}" onclick="acSelect('${ef.replace(/'/g,"\\'")}')">
+      ${label}${tag}
+    </div>`;
+  }).join('');
+}
+function acSelect(ef) {
+  selectedEfector = ef;
+  document.getElementById('efectorInput').value = ef;
+  document.getElementById('acDropdown').classList.remove('open');
+  document.getElementById('acClear').classList.add('visible');
+  fillEmpresas(ef);
+}
+function acClear() {
+  selectedEfector = '';
+  document.getElementById('efectorInput').value = '';
+  document.getElementById('acDropdown').classList.remove('open');
+  document.getElementById('acClear').classList.remove('visible');
+  fillEmpresas(null);
+}
+function acKeydown(e) {
+  const dd = document.getElementById('acDropdown');
+  const items = dd.querySelectorAll('.ac-item');
+  if (!dd.classList.contains('open')) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    acFocusIndex = Math.min(acFocusIndex+1, items.length-1);
+    items.forEach((el,i) => el.classList.toggle('focused', i===acFocusIndex));
+    if (items[acFocusIndex]) items[acFocusIndex].scrollIntoView({block:'nearest'});
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    acFocusIndex = Math.max(acFocusIndex-1, 0);
+    items.forEach((el,i) => el.classList.toggle('focused', i===acFocusIndex));
+    if (items[acFocusIndex]) items[acFocusIndex].scrollIntoView({block:'nearest'});
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (acFocusIndex >= 0 && items[acFocusIndex]) acSelect(items[acFocusIndex].dataset.ef);
+  } else if (e.key === 'Escape') {
+    dd.classList.remove('open');
+  }
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.autocomplete-wrap')) {
+    document.getElementById('acDropdown').classList.remove('open');
+  }
+});
+function fillEmpresas(ef) {
+  const pillMant = document.getElementById('pillMant');
+  const pillLimp = document.getElementById('pillLimp');
+  const valMant = document.getElementById('valMant');
+  const valLimp = document.getElementById('valLimp');
+  if (ef && empresasDB[ef]) {
+    const d = empresasDB[ef];
+    valMant.textContent = d.mant;
+    valLimp.textContent = d.limp;
+    pillMant.classList.add('filled');
+    pillLimp.classList.add('filled');
+  } else {
+    valMant.textContent = '—';
+    valLimp.textContent = '—';
+    valMant.style.color = 'var(--gris-texto)';
+    valLimp.style.color = 'var(--gris-texto)';
+    pillMant.classList.remove('filled');
+    pillLimp.classList.remove('filled');
+  }
+}
+
+// =====================================================
+// TOGGLE BLOQUES
+// =====================================================
+function toggle(n) {
+  const body = document.getElementById('body'+n);
+  const ch = document.getElementById('ch'+n);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  ch.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+// =====================================================
+// CALIFICACIÓN POR ASPECTO
+// =====================================================
+function rateAspect(btn, block, idx, val) {
+  // Guardar valor
+  aspectScores[block][idx] = val;
+
+  // Actualizar botones del aspecto
+  const row = btn.closest('.aspect-row');
+  row.querySelectorAll('.asp-btn').forEach(b => {
+    b.className = 'asp-btn';
+  });
+  btn.classList.add('sel-' + val);
+
+  // Colorear fila
+  row.classList.remove('val-bueno','val-regular','val-malo');
+  row.classList.add('val-'+val);
+
+  // Mostrar/ocultar fundamentación
+  const fund = document.getElementById('fund'+block+'_'+idx);
+  if (val === 'malo') {
+    fund.classList.add('visible');
+  } else {
+    fund.classList.remove('visible');
+  }
+
+  // Recalcular promedio del bloque
+  calcularPromedioBloque(block);
+}
+
+function calcularPromedioBloque(block) {
+  const scores = aspectScores[block];
+  const vals = Object.values(scores);
+  if (vals.length === 0) return;
+
+  // Contar cuántos aspectos totales tiene este bloque
+  const totalAspectos = document.getElementById('aspects'+block).querySelectorAll('.aspect-row').length;
+  const evaluados = vals.length;
+
+  if (evaluados < totalAspectos) {
+    // Aún hay aspectos sin evaluar — mostrar parcial igual
+  }
+
+  const malos = vals.filter(v => v === 'malo').length;
+  const regulares = vals.filter(v => v === 'regular').length;
+  const buenos = vals.filter(v => v === 'bueno').length;
+
+  // Lógica de promedio:
+  // Si hay al menos 1 malo → Malo
+  // Si hay al menos 1 regular (y no hay malos) → Regular
+  // Si todos buenos → Bueno
+  let promedio;
+  if (malos > 0) {
+    promedio = 'malo';
+  } else if (regulares > 0) {
+    promedio = 'regular';
+  } else {
+    promedio = 'bueno';
+  }
+
+  // Solo asignar calificación al bloque si todos los aspectos están evaluados
+  const allEvaluated = evaluados >= totalAspectos;
+
+  const promEl = document.getElementById('prom'+block);
+  const badgeEl = document.getElementById('badge'+block);
+  const sumEl = document.getElementById('sum'+block);
+  const cardEl = document.getElementById('card'+block);
+
+  const labelMap = { bueno: 'Bueno', regular: 'Regular', malo: 'Malo' };
+  const label = labelMap[promedio];
+
+  // Actualizar indicador de promedio (siempre, aunque sea parcial)
+  promEl.className = 'prom-val ' + promedio;
+  promEl.textContent = allEvaluated ? label : label + ' (parcial)';
+
+  if (allEvaluated) {
+    blockRatings[block] = promedio;
+    const badgeCls = 'badge-' + promedio;
+    [badgeEl, sumEl].forEach(el => {
+      el.className = 'sec-badge ' + badgeCls;
+      el.textContent = label;
+    });
+    cardEl.classList.add('done');
+  }
+
+  updateProgress();
+}
+
+// =====================================================
+// FOTOS
+// =====================================================
+function fotos(tid, input) {
+  const container = document.getElementById(tid);
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.className = 'foto-thumb';
+      container.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+  const zone = container.closest('.foto-zone');
+  zone.querySelector('.ico').style.display = 'none';
+  zone.childNodes.forEach(n => { if(n.nodeType===3) n.textContent=''; });
+}
+
+// =====================================================
+// PROGRESS BAR
+// =====================================================
+function updateProgress() {
+  const done = Object.values(blockRatings).filter(Boolean).length;
+  document.getElementById('progressBar').style.width = (done / TOTAL_BLOQUES * 100) + '%';
+}
+
+// =====================================================
+// HELPERS PARA EXPORTAR
+// =====================================================
+function getAspectosFund(block) {
+  const rows = document.getElementById('aspects'+block).querySelectorAll('.aspect-row');
+  const result = [];
+  rows.forEach((row, idx) => {
+    const nombre = row.querySelector('.aspect-name').textContent;
+    const val = aspectScores[block][idx] || 'Sin evaluar';
+    const fundTA = row.querySelector('.aspect-fund textarea');
+    const fund = fundTA ? fundTA.value : '';
+    result.push({ nombre, val, fund });
+  });
+  return result;
+}
+
+// =====================================================
+// EXPORTAR EXCEL
+// =====================================================
+function exportarExcel() {
+  const ef = document.getElementById('efectorInput').value || '';
+  const ag = document.getElementById('agente').value || '';
+  const fe = document.getElementById('fecha').value || '';
+  const ho = document.getElementById('hora').value || '';
+  const ob = document.getElementById('obsgen').value || '';
+  const empData = empresasDB[ef] || {};
+  const emMant = empData.mant || document.getElementById('valMant').textContent || '';
+  const emLimp = empData.limp || document.getElementById('valLimp').textContent || '';
+
+  const wb = XLSX.utils.book_new();
+
+  const resumenData = [
+    ['FORMULARIO MYSTERY PATIENT — Evaluación de efectores de salud'],
+    [],
+    ['DATOS DE LA VISITA'],
+    ['Efector / Establecimiento', ef],
+    ['Fecha de visita', fe],
+    ['Hora de ingreso', ho],
+    ['Agente evaluador (código)', ag],
+    ['Empresa de mantenimiento', emMant],
+    ['Empresa de limpieza', emLimp],
+    [],
+    ['RESUMEN DE CALIFICACIONES'],
+    ['Bloque', 'Calificación'],
+  ];
+
+  [1,2,3,4,5].forEach(n => {
+    const val = blockRatings[n];
+    resumenData.push([secNames[n], val ? (val.charAt(0).toUpperCase()+val.slice(1)) : 'Sin calificar']);
+  });
+
+  resumenData.push([]);
+  resumenData.push(['OBSERVACIONES GENERALES']);
+  resumenData.push([ob]);
+  resumenData.push([]);
+  resumenData.push(['Fecha de generación del informe', new Date().toLocaleString('es-AR')]);
+
+  const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
+  wsResumen['!cols'] = [{wch: 35}, {wch: 20}];
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  const detalleData = [['DETALLE POR BLOQUE'], []];
+  [1,2,3,4,5].forEach(n => {
+    detalleData.push(['Bloque ' + n + ': ' + secNames[n]]);
+    detalleData.push(['Aspecto', 'Calificación', 'Fundamentación (si Malo)']);
+    const aspectos = getAspectosFund(n);
+    aspectos.forEach(a => {
+      detalleData.push([a.nombre, a.val.charAt(0).toUpperCase()+a.val.slice(1), a.fund]);
+    });
+    const br = blockRatings[n];
+    detalleData.push(['PROMEDIO BLOQUE', br ? (br.charAt(0).toUpperCase()+br.slice(1)) : 'Sin calificar', '']);
+    detalleData.push([]);
+  });
+
+  const wsDetalle = XLSX.utils.aoa_to_sheet(detalleData);
+  wsDetalle['!cols'] = [{wch: 35}, {wch: 16}, {wch: 60}];
+  XLSX.utils.book_append_sheet(wb, wsDetalle, 'Detalle por bloque');
+
+  const efSlug = ef.replace(/[^a-z0-9]/gi,'_').toLowerCase() || 'efector';
+  const feSlug = fe || 'sin_fecha';
+  XLSX.writeFile(wb, 'mystery_patient_' + efSlug + '_' + feSlug + '.xlsx');
+  showToast('Informe Excel exportado');
+}
+
+// =====================================================
+// RESTABLECER FORMULARIO
+// =====================================================
+function setFechaHoraActual() {
+  const now = new Date();
+  document.getElementById('fecha').valueAsDate = now;
+  document.getElementById('hora').value = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+
+function resetearFormulario() {
+  if (!confirm('Se borrara la carga actual y se iniciara un formulario nuevo. ¿Continuar?')) return;
+
+  selectedEfector = '';
+  acFocusIndex = -1;
+  document.getElementById('efectorInput').value = '';
+  document.getElementById('acDropdown').classList.remove('open');
+  document.getElementById('acClear').classList.remove('visible');
+  fillEmpresas(null);
+
+  setFechaHoraActual();
+  document.getElementById('agente').value = 'GUSTAVO GONZALEZ';
+  document.getElementById('obsgen').value = '';
+
+  [1,2,3,4,5].forEach(n => {
+    aspectScores[n] = {};
+    blockRatings[n] = null;
+
+    document.getElementById('prom'+n).className = 'prom-val';
+    document.getElementById('prom'+n).textContent = 'Pendiente';
+
+    const badgeEl = document.getElementById('badge'+n);
+    const sumEl = document.getElementById('sum'+n);
+    [badgeEl, sumEl].forEach(el => {
+      el.className = 'sec-badge badge-pend';
+      el.textContent = 'Pendiente';
+    });
+    document.getElementById('card'+n).classList.remove('done');
+
+    document.querySelectorAll('#aspects'+n+' .aspect-row').forEach(row => {
+      row.classList.remove('val-bueno','val-regular','val-malo');
+      row.querySelectorAll('.asp-btn').forEach(btn => { btn.className = 'asp-btn'; });
+      const fund = row.querySelector('.aspect-fund');
+      if (fund) fund.classList.remove('visible');
+      const textarea = row.querySelector('.aspect-fund textarea');
+      if (textarea) textarea.value = '';
+    });
+
+    const fileInput = document.getElementById('fi'+n);
+    if (fileInput) fileInput.value = '';
+    const thumbs = document.getElementById('ft'+n);
+    if (thumbs) thumbs.innerHTML = '';
+    const zone = thumbs ? thumbs.closest('.foto-zone') : null;
+    if (zone) {
+      const ico = zone.querySelector('.ico');
+      if (ico) ico.style.display = '';
+      const textNode = Array.from(zone.childNodes).find(node => node.nodeType === 3);
+      if (textNode) textNode.textContent = '\n        Tocar para agregar fotos\n        ';
+    }
+
+    const body = document.getElementById('body'+n);
+    const ch = document.getElementById('ch'+n);
+    body.classList.toggle('open', n === 1);
+    ch.style.transform = n === 1 ? 'rotate(180deg)' : '';
+  });
+
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast('Formulario restablecido');
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+setFechaHoraActual();
+toggle(1);
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
